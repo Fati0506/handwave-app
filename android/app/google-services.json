@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104904426270",
+    "project_id": "handwave-connect",
+    "storage_bucket": "handwave-connect.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104904426270:android:a7086c6ea9719701cfbf0f",
+        "android_client_info": {
+          "package_name": "com.example.handwave_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDz1LpcZEtayKUsq1-cicWa0WnYzhAJ6KU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
