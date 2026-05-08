@@ -207,10 +207,10 @@ class _KioskCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Row(children: [
                     Icon(Icons.circle, color: Color(0xFF94A3B8), size: 7),
                     SizedBox(width: 5),

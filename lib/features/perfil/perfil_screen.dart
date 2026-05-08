@@ -257,7 +257,7 @@ class _SettingTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: HandWaveTheme.navy,
+            activeThumbColor: HandWaveTheme.navy,
           ),
         ],
       ),

@@ -87,7 +87,7 @@ class _FrasesScreenState extends State<FrasesScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: cat,
+              initialValue: cat,
               decoration: const InputDecoration(labelText: 'Categoría'),
               items: ['Frecuentes', 'Compras', 'Navegación', 'Emergencia']
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))

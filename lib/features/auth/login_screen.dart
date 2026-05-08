@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
 
           // Patrón decorativo de ondas (simula lenguaje de señas)
-          Positioned(
+          const Positioned(
             top: 0, right: -30,
             child: Opacity(
               opacity: 0.07,
@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen>
                   size: 220, color: Colors.white),
             ),
           ),
-          Positioned(
+          const Positioned(
             top: 60, left: -20,
             child: Opacity(
               opacity: 0.05,

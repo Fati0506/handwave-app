@@ -30,7 +30,7 @@ class _BolsilloScreenState extends State<BolsilloScreen>
   CameraController? _camCtrl;
   List<CameraDescription> _camaras = [];
   bool _camaraLista = false;
-  bool _procesandoGesto = false;
+  final bool _procesandoGesto = false;
   String _gestoActual = '';
   double _confianzaActual = 0.0;
   String _fraseAcumulada = '';
@@ -126,7 +126,7 @@ class _BolsilloScreenState extends State<BolsilloScreen>
       _GestoSim('?', 0.89, 1500),
     ];
 
-    Future<void> _procesar(int i) async {
+    Future<void> procesar(int i) async {
       if (!mounted || i >= gestos.length || _modo != BolsilloModo.camara) return;
       await Future.delayed(Duration(milliseconds: gestos[i].delayMs));
       if (!mounted || _modo != BolsilloModo.camara) return;
@@ -135,13 +135,13 @@ class _BolsilloScreenState extends State<BolsilloScreen>
         _confianzaActual = gestos[i].confianza;
         if (gestos[i].confianza >= 0.75) {
           _fraseAcumulada =
-              (_fraseAcumulada + ' ' + gestos[i].texto).trim();
+              ('$_fraseAcumulada ${gestos[i].texto}').trim();
         }
       });
-      await _procesar(i + 1);
+      await procesar(i + 1);
     }
 
-    _procesar(0);
+    procesar(0);
   }
 
   void _confirmarFraseLSP() {
@@ -405,8 +405,8 @@ class _BolsilloScreenState extends State<BolsilloScreen>
                       border: Border.all(
                           color: HandWaveTheme.teal.withOpacity(0.3)),
                     ),
-                    child: Column(
-                      children: const [
+                    child: const Column(
+                      children: [
                         Icon(Icons.sign_language_rounded,
                             color: HandWaveTheme.teal, size: 42),
                         SizedBox(height: 10),
@@ -442,8 +442,8 @@ class _BolsilloScreenState extends State<BolsilloScreen>
                       border: Border.all(
                           color: HandWaveTheme.danger.withOpacity(0.3)),
                     ),
-                    child: Column(
-                      children: const [
+                    child: const Column(
+                      children: [
                         Icon(Icons.record_voice_over_rounded,
                             color: HandWaveTheme.danger, size: 42),
                         SizedBox(height: 10),
@@ -839,15 +839,15 @@ class _BolsilloScreenState extends State<BolsilloScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 6),
             child: Row(
               children: [
-                const Text('CONVERSACIÓN', style: HWTextStyles.sectionLabel),
-                const Spacer(),
+                Text('CONVERSACIÓN', style: HWTextStyles.sectionLabel),
+                Spacer(),
                 // Leyenda
                 _Leyenda(color: HandWaveTheme.teal, label: 'Tú (LSP)'),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 _Leyenda(color: HandWaveTheme.danger, label: 'Vendedor'),
               ],
             ),

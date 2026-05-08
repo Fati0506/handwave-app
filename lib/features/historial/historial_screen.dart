@@ -151,15 +151,15 @@ class HistorialScreen extends StatelessWidget {
                                     color: isTercero
                                         ? const Color(0xFFF1F5F9)
                                         : HandWaveTheme.tealLight,
-                                    borderRadius: BorderRadius.only(
+                                    borderRadius: const BorderRadius.only(
                                       topLeft:
-                                          const Radius.circular(4),
+                                          Radius.circular(4),
                                       topRight:
-                                          const Radius.circular(12),
+                                          Radius.circular(12),
                                       bottomLeft:
-                                          const Radius.circular(12),
+                                          Radius.circular(12),
                                       bottomRight:
-                                          const Radius.circular(12),
+                                          Radius.circular(12),
                                     ),
                                   ),
                                   child: Text(
