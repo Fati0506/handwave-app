@@ -18,13 +18,13 @@ class HomeScreen extends StatelessWidget {
         slivers: [
           // ── AppBar expandido ────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 170,
+            expandedHeight: 130,
             pinned: true,
             automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 color: HandWaveTheme.navy,
-                padding: const EdgeInsets.fromLTRB(20, 54, 20, 18),
+                padding: const EdgeInsets.fromLTRB(20, 40, 20, 18),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -54,7 +54,6 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            title: const HandWaveLogo(size: 26, showText: false),
           ),
 
           SliverPadding(

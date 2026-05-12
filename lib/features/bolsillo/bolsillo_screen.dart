@@ -279,13 +279,15 @@ class _BolsilloScreenState extends State<BolsilloScreen>
 
   // ── BUILD ────────────────────────────────────────────────────────────────
 
-  @override
+@override
   Widget build(BuildContext context) {
     // Detectamos si el teclado está abierto
     final tecladoAbierto = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: HandWaveTheme.surface,
+      // 1. ESTO ES VITAL: Evita que el teclado rompa la pantalla bruscamente
+      resizeToAvoidBottomInset: true, 
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor:
@@ -309,26 +311,25 @@ class _BolsilloScreenState extends State<BolsilloScreen>
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (_) => AlertDialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                  // Definimos 'dialogContext' para que Flutter sepa qué cerrar
+                  builder: (dialogContext) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     title: const Text('¿Limpiar conversación?',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
-                    content: const Text(
-                        'Se borrará la sesión actual sin guardar.',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    content: const Text('Se borrará la sesión actual sin guardar.',
                         style: TextStyle(fontSize: 13)),
                     actions: [
                       TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancelar')),
+                        // Usamos 'dialogContext' para cerrar SOLO el diálogo
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('Cancelar'),
+                      ),
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           setState(() => _burbujas.clear());
                         },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: HandWaveTheme.danger),
+                        style: ElevatedButton.styleFrom(backgroundColor: HandWaveTheme.danger),
                         child: const Text('Limpiar'),
                       ),
                     ],
@@ -340,19 +341,33 @@ class _BolsilloScreenState extends State<BolsilloScreen>
           ],
         ],
       ),
-      // AQUÍ ESTÁ LA CORRECCIÓN: Una sola columna con el orden exacto
-      body: Column(
-        children: [
-          if (!tecladoAbierto) _buildBanner(),
-          if (!tecladoAbierto) _buildMicrofono(),
-          if (_transcripcionViva.isNotEmpty) _buildTranscripcionViva(),
+      // 2. ENVOLVEMOS EN UN SAFE AREA Y ORDENAMOS LA COLUMNA
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Ocultamos el micrófono si vas a escribir
+            if (!tecladoAbierto) _buildBanner(),
+            if (!tecladoAbierto) _buildMicrofono(),
+            if (_transcripcionViva.isNotEmpty) _buildTranscripcionViva(),
 
-          Expanded(child: _buildConversacion()),
+            // La conversación se expande para llenar el espacio libre
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: _buildConversacion(),
+              ),
+            ),
 
-          if (!tecladoAbierto) _buildFrasesRapidas(),
-          _buildEntradaTextoLibre(),
-          if (_burbujas.isNotEmpty && !tecladoAbierto) _buildBarraAccion(),
-        ],
+            // Ocultamos las frases rápidas si el teclado sube
+            if (!tecladoAbierto) _buildFrasesRapidas(),
+            
+            // La caja de texto SIEMPRE visible
+            _buildEntradaTextoLibre(),
+            
+            // La barra de acciones inferior se oculta para dar espacio al teclado
+            if (_burbujas.isNotEmpty && !tecladoAbierto) _buildBarraAccion(),
+          ],
+        ),
       ),
     );
   }
@@ -580,37 +595,43 @@ class _BolsilloScreenState extends State<BolsilloScreen>
 
   Widget _buildConversacion() {
     if (_burbujas.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: HandWaveTheme.surface,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.chat_bubble_outline_rounded,
-                  color: Color(0xFFCBD5E1), size: 34),
+      // ─── TÉCNICA DEFINITIVA ANTI-OVERFLOW DEL TECLADO ───────────
+      return CustomScrollView(
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: HandWaveTheme.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.chat_bubble_outline_rounded,
+                      color: Color(0xFFCBD5E1), size: 34),
+                ),
+                const SizedBox(height: 16),
+                const Text('La conversación aparecerá aquí',
+                    style: TextStyle(
+                        color: HandWaveTheme.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                const Text(
+                  'Activa el micrófono y deja hablar\nal vendedor para empezar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: HandWaveTheme.textSecondary,
+                      fontSize: 13,
+                      height: 1.5),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            const Text('La conversación aparecerá aquí',
-                style: TextStyle(
-                    color: HandWaveTheme.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500)),
-            const SizedBox(height: 6),
-            const Text(
-              'Activa el micrófono y deja hablar\nal vendedor para empezar.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: HandWaveTheme.textSecondary,
-                  fontSize: 12,
-                  height: 1.5),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
@@ -781,7 +802,20 @@ class _BolsilloScreenState extends State<BolsilloScreen>
               scrollDirection: Axis.horizontal,
               itemCount: frases.length,
               itemBuilder: (_, i) => GestureDetector(
-                onTap: () => _agregarFraseRapida(frases[i]),
+                // ─── AQUÍ ESTÁ LA MAGIA ──────────────────────────────
+                onTap: () async {
+                  final frase = frases[i];
+                  
+                  // 1. Agregamos la frase a la pantalla (como ya lo hacías)
+                  _agregarFraseRapida(frase); 
+                  
+                  // 2. Hacemos que el celular lo diga en voz alta
+                  await _tts.setLanguage("es-ES"); // Acento español
+                  await _tts.setSpeechRate(0.5);   // Velocidad normal para que se entienda
+                  await _tts.setVolume(1.0);       // Volumen al 100%
+                  await _tts.speak(frase);
+                },
+                // ─────────────────────────────────────────────────────
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.symmetric(
