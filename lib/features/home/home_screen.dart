@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
               delegate: SliverChildListDelegate([
 
                 // ── Estado del kiosco ────────────────────────────────
-                _KioskCard(onTap: () => context.go('/kiosco')),
+                _KioskCard(onTap: () => context.push('/kiosco')),
                 const SizedBox(height: 20),
 
                 // ── Acciones rápidas ─────────────────────────────────
@@ -118,7 +118,7 @@ class HomeScreen extends StatelessWidget {
                   title: 'Sincronización kiosco',
                   subtitle: 'Escanea el QR del punto de venta',
                   badge: HWBadge.offline(),
-                  onTap: () => context.go('/kiosco'),
+                  onTap: () => context.push('/kiosco'),
                 ),
                 _ModuleCard(
                   icon: Icons.chat_bubble_rounded,

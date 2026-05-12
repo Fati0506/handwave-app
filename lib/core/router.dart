@@ -50,6 +50,10 @@ GoRouter buildRouter(AuthProvider auth) {
         path: '/login',
         builder: (_, __) => const LoginScreen(),
       ),
+      GoRoute(
+            path: '/kiosco',
+            builder: (_, __) => const KioscoScreen(),
+          ),
       ShellRoute(
         builder: (_, __, child) => MainScaffold(child: child),
         routes: [
@@ -78,11 +82,7 @@ GoRouter buildRouter(AuthProvider auth) {
                 builder: (_, __) => const HistorialScreen(),
               ),
             ],
-          ),
-          GoRoute(
-            path: '/kiosco',
-            builder: (_, __) => const KioscoScreen(),
-          ),
+          ),  
         ],
       ),
     ],
