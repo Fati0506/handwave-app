@@ -150,7 +150,8 @@ class _KioscoScreenState extends State<KioscoScreen> {
             TextField(
               controller: _idCtrl,
               autofocus: true,
-              textCapitalization: TextCapitalization.characters,
+              textCapitalization: TextCapitalization.none,
+              keyboardType: TextInputType.text,
               decoration: const InputDecoration(
                 labelText: 'ID del kiosco',
                 prefixIcon: Icon(Icons.qr_code_rounded, size: 20),
