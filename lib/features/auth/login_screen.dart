@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import 'auth_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -230,7 +231,47 @@ class _LoginScreenState extends State<LoginScreen>
                                   ? 'Mínimo 6 caracteres'
                                   : null,
                             ),
-                            const SizedBox(height: 28),
+                            
+                            if (!_isRegister)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () async {
+                                    // Verificamos que el usuario haya escrito su correo arriba
+                                    if (_emailCtrl.text.trim().isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Escribe tu correo arriba para enviarte el enlace.')),
+                                      );
+                                      return;
+                                    }
+
+                                    try {
+                                      // Enviamos el correo de recuperación
+                                      await FirebaseAuth.instance.sendPasswordResetEmail(
+                                        email: _emailCtrl.text.trim(),
+                                      );
+                                      // ¡Notificación en la app!
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('¡Enlace enviado! Revisa el correo en tu celular.')),
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Ocurrió un error al enviar el correo.')),
+                                      );
+                                    }
+                                  },
+                                  child: const Text(
+                                    '¿Olvidaste tu contraseña?',
+                                    style: TextStyle(
+                                      fontSize: 13, 
+                                      fontWeight: FontWeight.w600,
+                                    ), 
+                                  ),
+                                ),
+                              ),
+
+                            // Ajustamos el espacio dependiendo de si hay botón de olvido o no
+                            SizedBox(height: _isRegister ? 28 : 8),
 
                             SizedBox(
                               width: double.infinity,
