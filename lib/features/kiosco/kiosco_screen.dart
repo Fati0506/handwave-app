@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme.dart';
 import '../../shared/services/firebase_realtime_service.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class KioscoScreen extends StatefulWidget {
   const KioscoScreen({super.key});
@@ -24,7 +25,17 @@ class _KioscoScreenState extends State<KioscoScreen> {
   GestoDetectado? _ultimoGesto;
   String _mensajeTFT = '';
   String _estadoKiosco = 'offline';
-  final List<Map<String, dynamic>> _historialGestos = [];
+  final List<Map<String, dynamic>> _conversacionChat = [];
+
+  final FlutterTts _flutterTts = FlutterTts();
+  String _ultimoGestoHablado = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Configuramos la voz en español
+    _flutterTts.setLanguage("es-ES");
+  }
 
   @override
   void dispose() {
@@ -41,54 +52,76 @@ class _KioscoScreenState extends State<KioscoScreen> {
   Future<void> _conectar(String id) async {
     if (id.trim().isEmpty) return;
     setState(() => _cargando = true);
+    try {
+      final existe = await FirebaseRealtimeService.kioscoExiste(id.trim());
+      if (!existe && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Kiosco no encontrado. Verifica el ID.')),
+        );
+        setState(() => _cargando = false);
+        return;
+      }
 
-    final existe = await FirebaseRealtimeService.kioscoExiste(id.trim());
-    if (!existe && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Kiosco no encontrado. Verifica el ID.')),
-      );
-      setState(() => _cargando = false);
-      return;
-    }
+      await FirebaseRealtimeService.setAppConectada(id.trim(), true);
 
-    await FirebaseRealtimeService.setAppConectada(id.trim(), true);
+      _gestoSub = FirebaseRealtimeService.gestoStream(id.trim()).listen((g) {
+        if (g == null || !mounted) return;
+        setState(() {
+          _ultimoGesto = g;
+          if (g.esValido) {
+            if (g.texto != _ultimoGestoHablado) {
+              _flutterTts.speak(g.texto);
+              _ultimoGestoHablado = g.texto;
+            }
+            _conversacionChat.insert(0, {
+              'sender': 'usuario',
+              'texto': g.texto,
+              'hora': _hora(),
+            });
+            if (_conversacionChat.length > 20) _conversacionChat.removeLast();
+          }
+        });
+        if (g.esValido) HapticFeedback.lightImpact();
+      });
 
-    _gestoSub =
-        FirebaseRealtimeService.gestoStream(id.trim()).listen((g) {
-      if (g == null || !mounted) return;
-      setState(() {
-        _ultimoGesto = g;
-        if (g.esValido) {
-          _historialGestos.insert(0, {
-            'texto': g.texto,
-            'confianza': g.confianzaPct,
-            'hora': _hora(),
+      _mensajeSub = FirebaseRealtimeService.mensajeTFTStream(id.trim()).listen((msg) {
+        if (mounted && msg.isNotEmpty) {
+          setState(() {
+            _mensajeTFT = msg;
+            _conversacionChat.insert(0, {
+              'sender': 'vendedor',
+              'texto': msg,
+              'hora': _hora(),
+            });
+            if (_conversacionChat.length > 20) _conversacionChat.removeLast();
           });
-          if (_historialGestos.length > 20) _historialGestos.removeLast();
         }
       });
-      if (g.esValido) HapticFeedback.lightImpact();
-    });
 
-    _mensajeSub =
-        FirebaseRealtimeService.mensajeTFTStream(id.trim()).listen((msg) {
-      if (mounted) setState(() => _mensajeTFT = msg);
-    });
+      _estadoSub =
+          FirebaseRealtimeService.estadoStream(id.trim()).listen((estado) {
+        if (mounted) setState(() => _estadoKiosco = estado);
+      });
 
-    _estadoSub =
-        FirebaseRealtimeService.estadoStream(id.trim()).listen((estado) {
-      if (mounted) setState(() => _estadoKiosco = estado);
-    });
-
-    setState(() {
-      _kioscoId = id.trim();
-      _conectado = true;
-      _cargando = false;
-    });
+      setState(() {
+        _kioscoId = id.trim();
+        _conectado = true;
+        _cargando = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargando = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error de conexión: Verifica tu internet.')),
+        );
+      }
+    }
   }
 
   Future<void> _desconectar() async {
+    await _flutterTts.stop();
+    _ultimoGestoHablado = '';
     _gestoSub?.cancel();
     _mensajeSub?.cancel();
     _estadoSub?.cancel();
@@ -100,7 +133,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
       _conectado = false;
       _mensajeTFT = '';
       _ultimoGesto = null;
-      _historialGestos.clear();
+      _conversacionChat.clear();
       _estadoKiosco = 'offline';
     });
   }
@@ -110,6 +143,16 @@ class _KioscoScreenState extends State<KioscoScreen> {
     HapticFeedback.mediumImpact();
     await FirebaseRealtimeService.enviarFrase(_kioscoId!, frase);
     if (mounted) {
+      setState(() {
+        _conversacionChat.insert(0, {
+          'sender': 'usuario',
+          'texto': frase,
+          'hora': _hora(),
+        });
+      });
+
+      _flutterTts.speak(frase);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Enviado: "$frase"')),
       );
@@ -136,8 +179,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Conectar al kiosco',
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             const Text(
               'Ingresa el ID del kiosco (ej: HW-001).\nEl QR automático llega en semana 5.',
@@ -182,11 +224,9 @@ class _KioscoScreenState extends State<KioscoScreen> {
           if (_conectado)
             TextButton.icon(
               onPressed: _desconectar,
-              icon: const Icon(Icons.link_off,
-                  color: Colors.white60, size: 18),
+              icon: const Icon(Icons.link_off, color: Colors.white60, size: 18),
               label: const Text('Desconectar',
-                  style:
-                      TextStyle(color: Colors.white60, fontSize: 12)),
+                  style: TextStyle(color: Colors.white60, fontSize: 12)),
             ),
         ],
       ),
@@ -238,8 +278,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
                     : const Icon(Icons.add_link_rounded, size: 20),
-                label:
-                    Text(_cargando ? 'Conectando...' : 'Conectar kiosco'),
+                label: Text(_cargando ? 'Conectando...' : 'Conectar kiosco'),
               ),
             ),
           ],
@@ -271,8 +310,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
             decoration: BoxDecoration(
               color: HandWaveTheme.greenLight,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                  color: HandWaveTheme.green.withOpacity(0.3)),
+              border: Border.all(color: HandWaveTheme.green.withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -292,8 +330,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
                               color: HandWaveTheme.green,
                               fontWeight: FontWeight.w700,
                               fontSize: 13)),
-                      Text(
-                          'Kiosco: $_kioscoId · Estado: $_estadoKiosco',
+                      Text('Kiosco: $_kioscoId · Estado: $_estadoKiosco',
                           style: const TextStyle(
                               color: HandWaveTheme.green, fontSize: 11)),
                     ],
@@ -342,8 +379,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
                                     fontSize: 22,
                                     fontWeight: FontWeight.w700,
                                     color: HandWaveTheme.teal)),
-                            Text(
-                                'Confianza: ${_ultimoGesto!.confianzaPct}',
+                            Text('Confianza: ${_ultimoGesto!.confianzaPct}',
                                 style: const TextStyle(
                                     fontSize: 11,
                                     color: HandWaveTheme.textSecondary)),
@@ -360,9 +396,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          _ultimoGesto!.esValido
-                              ? 'Válido'
-                              : 'Baja confianza',
+                          _ultimoGesto!.esValido ? 'Válido' : 'Baja confianza',
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -384,8 +418,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border:
-                  Border.all(color: HandWaveTheme.border, width: 0.8),
+              border: Border.all(color: HandWaveTheme.border, width: 0.8),
             ),
             child: _mensajeTFT.isEmpty
                 ? const Row(children: [
@@ -405,8 +438,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
           const SizedBox(height: 16),
 
           // Frases rápidas
-          const Text('ENVIAR FRASE RÁPIDA',
-              style: HWTextStyles.sectionLabel),
+          const Text('ENVIAR FRASE RÁPIDA', style: HWTextStyles.sectionLabel),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -421,8 +453,7 @@ class _KioscoScreenState extends State<KioscoScreen> {
                           color: HandWaveTheme.tealLight,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color:
-                                  HandWaveTheme.teal.withOpacity(0.3)),
+                              color: HandWaveTheme.teal.withOpacity(0.3)),
                         ),
                         child: Text(f,
                             style: const TextStyle(
@@ -436,44 +467,64 @@ class _KioscoScreenState extends State<KioscoScreen> {
           const SizedBox(height: 16),
 
           // Historial de gestos
-          if (_historialGestos.isNotEmpty) ...[
-            const Text('HISTORIAL DE GESTOS (SESIÓN)',
+          if (_conversacionChat.isNotEmpty) ...[
+            const Text('CONVERSACIÓN EN VIVO (CHAT)',
                 style: HWTextStyles.sectionLabel),
-            const SizedBox(height: 8),
-            ..._historialGestos.take(8).map((g) => Container(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+            const SizedBox(height: 12),
+            ..._conversacionChat.take(10).map((msg) {
+              // Verificamos quién envió el mensaje
+              bool esUsuarioSordo = msg['sender'] == 'usuario';
+
+              return Align(
+                alignment: esUsuarioSordo ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.75),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: HandWaveTheme.border, width: 0.5),
+                    // Verde/Teal para el sordo (Derecha), Azul para el vendedor (Izquierda)
+                    color: esUsuarioSordo
+                        ? HandWaveTheme.tealLight
+                        : HandWaveTheme.blue,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      // Redondeamos las esquinas opuestas para dar el efecto de burbuja
+                      bottomLeft: Radius.circular(esUsuarioSordo ? 16 : 0),
+                      bottomRight: Radius.circular(esUsuarioSordo ? 0 : 16),
+                    ),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: esUsuarioSordo
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.sign_language_rounded,
-                          color: HandWaveTheme.teal, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(g['texto'] as String,
-                            style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: HandWaveTheme.textPrimary)),
+                      Text(
+                        msg['texto'] as String,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: esUsuarioSordo
+                              ? HandWaveTheme.textPrimary
+                              : Colors.white, // Letras blancas para el fondo azul
+                        ),
                       ),
-                      Text(g['confianza'] as String,
-                          style: const TextStyle(
-                              fontSize: 10,
-                              color: HandWaveTheme.textSecondary)),
-                      const SizedBox(width: 8),
-                      Text(g['hora'] as String,
-                          style: const TextStyle(
-                              fontSize: 10,
-                              color: HandWaveTheme.textSecondary)),
+                      const SizedBox(height: 4),
+                      Text(
+                        msg['hora'] as String,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: esUsuarioSordo
+                              ? HandWaveTheme.textSecondary
+                              : Colors.white70,
+                        ),
+                      ),
                     ],
                   ),
-                )),
+                ),
+              );
+            }),
           ],
         ],
       ),
