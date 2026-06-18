@@ -67,21 +67,29 @@ class _KioscoScreenState extends State<KioscoScreen> {
 
       _gestoSub = FirebaseRealtimeService.gestoStream(id.trim()).listen((g) {
         if (g == null || !mounted) return;
+
         setState(() {
-          _ultimoGesto = g;
-          if (g.esValido) {
-            if (g.texto != _ultimoGestoHablado) {
-              _flutterTts.speak(g.texto);
-              _ultimoGestoHablado = g.texto;
-            }
-            _conversacionChat.insert(0, {
+          _ultimoGesto = g; // Esto actualiza el recuadro verde de arriba
+
+          // VERIFICACIÓN ESTRICTA: Solo si es válido y el texto es NUEVO
+          if (g.esValido && g.texto != _ultimoGestoHablado) {
+
+            // 1. Habla en voz alta
+            _flutterTts.speak(g.texto);
+            _ultimoGestoHablado = g.texto;
+
+            // 2. Agrega la burbuja al FINAL (abajo)
+            _conversacionChat.add({
               'sender': 'usuario',
               'texto': g.texto,
               'hora': _hora(),
             });
-            if (_conversacionChat.length > 20) _conversacionChat.removeLast();
+
+            // 3. Control de límite (borramos el mensaje más viejo de arriba)
+            if (_conversacionChat.length > 20) _conversacionChat.removeAt(0);
           }
         });
+
         if (g.esValido) HapticFeedback.lightImpact();
       });
 
@@ -89,12 +97,27 @@ class _KioscoScreenState extends State<KioscoScreen> {
         if (mounted && msg.isNotEmpty) {
           setState(() {
             _mensajeTFT = msg;
-            _conversacionChat.insert(0, {
+            _conversacionChat.add({
               'sender': 'vendedor',
               'texto': msg,
               'hora': _hora(),
             });
             if (_conversacionChat.length > 20) _conversacionChat.removeLast();
+          });
+        }
+      });_mensajeSub = FirebaseRealtimeService.mensajeTFTStream(id.trim()).listen((msg) {
+        if (mounted && msg.isNotEmpty) {
+          setState(() {
+            _mensajeTFT = msg; // Actualiza el recuadro blanco superior
+
+            // Agrega la respuesta del vendedor ABAJO
+            _conversacionChat.add({
+              'sender': 'vendedor',
+              'texto': msg,
+              'hora': _hora(),
+            });
+
+            if (_conversacionChat.length > 20) _conversacionChat.removeAt(0);
           });
         }
       });
@@ -141,14 +164,18 @@ class _KioscoScreenState extends State<KioscoScreen> {
   Future<void> _enviarFrase(String frase) async {
     if (_kioscoId == null) return;
     HapticFeedback.mediumImpact();
+
     await FirebaseRealtimeService.enviarFrase(_kioscoId!, frase);
+
     if (mounted) {
       setState(() {
-        _conversacionChat.insert(0, {
+        // Agrega el texto del botón ABAJO
+        _conversacionChat.add({
           'sender': 'usuario',
           'texto': frase,
           'hora': _hora(),
         });
+        if (_conversacionChat.length > 20) _conversacionChat.removeAt(0);
       });
 
       _flutterTts.speak(frase);
