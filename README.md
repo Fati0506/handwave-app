@@ -12,7 +12,6 @@ Handwave es una aplicación móvil desarrollada con **Flutter** enfocada en faci
 * **Framework:** [Flutter](https://flutter.dev/)
 * **Lenguaje:** [Dart](https://dart.dev/)
 * **Backend/DB:** [Firebase](https://firebase.google.com/) (Realtime Database/Firestore)[cite: 6]
-* **Gestión de Estado:** [Provider / Tu método elegido]
 
 ## 📂 Estructura del Proyecto
 ```text
@@ -21,3 +20,10 @@ lib/
 ├── features/       # Módulos específicos (auth, radar, historial, perfil, etc.)
 ├── shared/         # Widgets reutilizables y servicios comunes
 └── main.dart       # Punto de entrada de la aplicación
+```
+
+
+##🛠️ Estado del Proyecto
+Actualmente en fase de desarrollo activo. Se está trabajando en la mejora de la precisión de la detección de gestos y la optimización de los módulos de integración con Firebase.
+
+Desarrollado por Fátima Pacheco Antón
