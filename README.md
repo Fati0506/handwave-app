@@ -24,6 +24,6 @@ lib/
 
 
 ##🛠️ Estado del Proyecto
-Actualmente en fase de desarrollo activo. Se está trabajando en la mejora de la precisión de la detección de gestos y la optimización de los módulos de integración con Firebase.
+* Actualmente en fase de desarrollo activo. Se está trabajando en la mejora de la precisión de la detección de gestos y la optimización de los módulos de integración con Firebase.
 
 Desarrollado por Fátima Pacheco Antón
