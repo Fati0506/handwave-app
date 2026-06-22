@@ -1,16 +1,23 @@
-# handwave_app
+# Handwave App 🖐️
 
-A new Flutter project.
+Handwave es una aplicación móvil desarrollada con **Flutter** enfocada en facilitar la interacción mediante el uso de gestos. Este proyecto busca optimizar la experiencia de usuario (UX) permitiendo una navegación intuitiva y eficiente.
 
-## Getting Started
+## 🚀 Características principales
+* **Desarrollo Multiplataforma:** Construido con Flutter para una experiencia fluida en Android e iOS[cite: 6].
+* **Backend en Tiempo Real:** Integración con **Firebase** para la gestión y persistencia de datos[cite: 6].
+* **Arquitectura Escalable:** Estructura modular organizada por *features* (auth, radar, historial, perfil, etc.)[cite: 6].
+* **UX Intuitiva:** Interfaz diseñada para la interacción mediante gestos.
 
-This project is a starting point for a Flutter application.
+## 🛠️ Stack Tecnológico
+* **Framework:** [Flutter](https://flutter.dev/)
+* **Lenguaje:** [Dart](https://dart.dev/)
+* **Backend/DB:** [Firebase](https://firebase.google.com/) (Realtime Database/Firestore)[cite: 6]
+* **Gestión de Estado:** [Provider / Tu método elegido]
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📂 Estructura del Proyecto
+```text
+lib/
+├── core/           # Router, temas y configuraciones globales
+├── features/       # Módulos específicos (auth, radar, historial, perfil, etc.)
+├── shared/         # Widgets reutilizables y servicios comunes
+└── main.dart       # Punto de entrada de la aplicación
