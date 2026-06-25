@@ -167,15 +167,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
               TextFormField(controller: _dniCtrl, keyboardType: TextInputType.number, maxLength: 8, decoration: const InputDecoration(labelText: 'DNI', counterText: "")),
               TextFormField(controller: _correoCtrl, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Correo electrónico')),
               TextFormField(controller: _direccionCtrl, textCapitalization: TextCapitalization.sentences, decoration: const InputDecoration(labelText: 'Dirección de domicilio')),
-              
+
               const SizedBox(height: 24),
-              
+
               // Contacto de Emergencia
               const Text('Contacto de Emergencia', style: TextStyle(fontSize: 12, color: HandWaveTheme.danger, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               TextFormField(controller: _sosNombreCtrl, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Nombre del contacto')),
               TextFormField(controller: _sosTelefonoCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Teléfono (Ej: 999111222)')),
-              
+
               const SizedBox(height: 24),
 
               // Datos Médicos
@@ -240,8 +240,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
     if (context.mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     // Mensaje de emergencia súper completo
+    final nombreSos = data['contacto_sos_nombre'] ?? 'Contacto de emergencia';
     final dni = data['dni'] ?? 'No registrado';
-    final msg = '¡S.O.S! Soy $nombreUsuario. Necesito ayuda urgente.\nDNI: $dni\n\nMi ubicación actual es: $ubicacionUrl';
+    final msg = '¡Hola $nombreSos!\n\n¡S.O.S! Soy $nombreUsuario. Necesito ayuda urgente.\nDNI: $dni\n\nMi ubicación actual es: $ubicacionUrl';
 
     if (context.mounted) {
       showModalBottomSheet(
@@ -335,111 +336,111 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
           // ── StreamBuilder para los Datos Dinámicos ────────────────────────
           StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('usuarios').doc(auth.user?.uid).snapshots(),
-            builder: (context, snap) {
-              final data = snap.data?.data() as Map<String, dynamic>? ?? {};
-              final telfSos = data['contacto_sos_telefono'] ?? '';
-              final correoDisplay = data['correo'] != null && data['correo'].toString().isNotEmpty ? data['correo'] : auth.user?.email;
+              stream: FirebaseFirestore.instance.collection('usuarios').doc(auth.user?.uid).snapshots(),
+              builder: (context, snap) {
+                final data = snap.data?.data() as Map<String, dynamic>? ?? {};
+                final telfSos = data['contacto_sos_telefono'] ?? '';
+                final correoDisplay = data['correo'] != null && data['correo'].toString().isNotEmpty ? data['correo'] : auth.user?.email;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SECCIÓN 1: MIS DATOS PERSONALES
-                  const Text('MIS DATOS PERSONALES', style: HWTextStyles.sectionLabel),
-                  const SizedBox(height: 8),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          _InfoRow(label: 'DNI', value: data['dni'] ?? '-'),
-                          const Divider(height: 16),
-                          _InfoRow(label: 'Nombres', value: data['nombre'] ?? '-'),
-                          const Divider(height: 16),
-                          _InfoRow(label: 'Apellidos', value: data['apellidos'] ?? '-'),
-                          const Divider(height: 16),
-                          _InfoRow(label: 'Correo', value: correoDisplay ?? '-'),
-                          const Divider(height: 16),
-                          _InfoRow(label: 'Dirección', value: data['direccion'] ?? '-'),
-                        ],
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // SECCIÓN 1: MIS DATOS PERSONALES
+                    const Text('MIS DATOS PERSONALES', style: HWTextStyles.sectionLabel),
+                    const SizedBox(height: 8),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _InfoRow(label: 'DNI', value: data['dni'] ?? '-'),
+                            const Divider(height: 16),
+                            _InfoRow(label: 'Nombres', value: data['nombre'] ?? '-'),
+                            const Divider(height: 16),
+                            _InfoRow(label: 'Apellidos', value: data['apellidos'] ?? '-'),
+                            const Divider(height: 16),
+                            _InfoRow(label: 'Correo', value: correoDisplay ?? '-'),
+                            const Divider(height: 16),
+                            _InfoRow(label: 'Dirección', value: data['direccion'] ?? '-'),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // SECCIÓN 2: EMERGENCIA Y SALUD
-                  const Text('EMERGENCIA Y SALUD', style: HWTextStyles.sectionLabel),
-                  const SizedBox(height: 8),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.medical_services_outlined, color: HandWaveTheme.teal, size: 20),
-                              const SizedBox(width: 10),
-                              Text('Sangre: ${data['tipo_sangre'] ?? '-'}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Alergias: ${data['alergias'] ?? 'Ninguna'}', style: const TextStyle(fontSize: 13, color: HandWaveTheme.textSecondary)),
-                          const SizedBox(height: 4),
-                          Text('Condición: ${data['condicion'] ?? 'Ninguna'}', style: const TextStyle(fontSize: 13, color: HandWaveTheme.textSecondary)),
-                          const Divider(height: 24),
-                          
-                          Row(
-                            children: [
-                              const Icon(Icons.contact_emergency_outlined, color: HandWaveTheme.danger, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Contacto SOS', style: TextStyle(fontSize: 11, color: HandWaveTheme.textSecondary)),
-                                    Text('${data['contacto_sos_nombre'] ?? 'Sin configurar'}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    Text(telfSos, style: const TextStyle(fontSize: 13)),
-                                  ],
+                    // SECCIÓN 2: EMERGENCIA Y SALUD
+                    const Text('EMERGENCIA Y SALUD', style: HWTextStyles.sectionLabel),
+                    const SizedBox(height: 8),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.medical_services_outlined, color: HandWaveTheme.teal, size: 20),
+                                const SizedBox(width: 10),
+                                Text('Sangre: ${data['tipo_sangre'] ?? '-'}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Alergias: ${data['alergias'] ?? 'Ninguna'}', style: const TextStyle(fontSize: 13, color: HandWaveTheme.textSecondary)),
+                            const SizedBox(height: 4),
+                            Text('Condición: ${data['condicion'] ?? 'Ninguna'}', style: const TextStyle(fontSize: 13, color: HandWaveTheme.textSecondary)),
+                            const Divider(height: 24),
+
+                            Row(
+                              children: [
+                                const Icon(Icons.contact_emergency_outlined, color: HandWaveTheme.danger, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Contacto SOS', style: TextStyle(fontSize: 11, color: HandWaveTheme.textSecondary)),
+                                      Text('${data['contacto_sos_nombre'] ?? 'Sin configurar'}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                      Text(telfSos, style: const TextStyle(fontSize: 13)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Botones de acción SOS
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: telfSos.isEmpty ? null : () => 
-                                      _enviarAlertaConOpciones(context, telfSos, auth.displayName, data),
-                                  style: ElevatedButton.styleFrom(backgroundColor: HandWaveTheme.green),
-                                  icon: const Icon(Icons.emergency_share_rounded, size: 18),
-                                  label: const Text('Enviar Alerta', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Botones de acción SOS
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: telfSos.isEmpty ? null : () =>
+                                        _enviarAlertaConOpciones(context, telfSos, auth.displayName, data),
+                                    style: ElevatedButton.styleFrom(backgroundColor: HandWaveTheme.green),
+                                    icon: const Icon(Icons.emergency_share_rounded, size: 18),
+                                    label: const Text('Enviar Alerta', style: TextStyle(fontSize: 12)),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: telfSos.isEmpty ? null : () async {
-                                    final uri = Uri.parse('tel:$telfSos');
-                                    if (await canLaunchUrl(uri)) await launchUrl(uri);
-                                  },
-                                  style: ElevatedButton.styleFrom(backgroundColor: HandWaveTheme.danger),
-                                  icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
-                                  label: const Text('Llamar', style: TextStyle(fontSize: 12)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: telfSos.isEmpty ? null : () async {
+                                      final uri = Uri.parse('tel:$telfSos');
+                                      if (await canLaunchUrl(uri)) await launchUrl(uri);
+                                    },
+                                    style: ElevatedButton.styleFrom(backgroundColor: HandWaveTheme.danger),
+                                    icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
+                                    label: const Text('Llamar', style: TextStyle(fontSize: 12)),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            }
+                  ],
+                );
+              }
           ),
           const SizedBox(height: 16),
 
